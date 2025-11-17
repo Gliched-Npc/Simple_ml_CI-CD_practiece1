@@ -1,0 +1,57 @@
+name: ML Pipeline (Tests + Train + Monitor + Artifacts)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}   # allows manual run
+
+jobs:
+  ml_pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # 1) Checkout your repository files
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2) Setup Python
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    # 3) Install dependencies
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest
+
+    # 4) Run tests
+    - name: Run tests
+      run: |
+        pytest -q
+
+    # 5) Train model → creates model.pkl
+    - name: Train model
+      run: |
+        python train.py
+
+    # 6) Upload model.pkl as artifact
+    - name: Upload trained model
+      uses: actions/upload-artifact@v4
+      with:
+        name: trained-model
+        path: model.pkl
+
+    # 7) Run monitoring → creates drift_report.html
+    - name: Run monitoring
+      run: |
+        python monitor.py
+
+    # 8) Upload drift report as artifact
+    - name: Upload drift report
+      uses: actions/upload-artifact@v4
+      with:
+        name: drift-report
+        path: drift_report.html
